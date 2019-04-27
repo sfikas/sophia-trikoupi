@@ -45,7 +45,8 @@ def get_words_from_pagexml(xmlname,
         transcr_new = transcr_new.replace('&quot', '')
         #trascr_new = re.sub(r'&quot', '', transcr_new)
         points_new = process_bbox(x[1])
-        id_new = x[0]
+        #id_new = x[0]
+        id_new = xmlname
         if(len(transcr_new) == 0):
             print('Warning! Found word with empty transcription (probably due to removed punctuation). Replacing with dummy character "#"')
             transcr_new = '#'
@@ -53,13 +54,7 @@ def get_words_from_pagexml(xmlname,
     print('Found {} words in file {}.'.format(len(words_processed), xmlname))
     return(words_processed)
 
-if __name__=='__main__':
-    logger = logging.getLogger('SophiaTrikoupi::dataset')
-    logger.info('------')
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', '-mode', required=True, choices=['check','extract_lexicon'], help='Execution mode.')
-    args = parser.parse_args()
-
+def read_sophia_xmls():
     all_word_tuples = []
     all_xmls = []
     for x in range(1, 48):
@@ -68,12 +63,23 @@ if __name__=='__main__':
         all_xmls.append('data/_00{0:02d}.xml'.format(x))
     for x in all_xmls:
         all_word_tuples += get_words_from_pagexml(x)
+    return all_word_tuples
+
+if __name__=='__main__':
+    logger = logging.getLogger('SophiaTrikoupi::dataset')
+    logger.info('------')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--mode', '-mode', required=True, choices=['check','extract_lexicon'], help='Execution mode.')
+    args = parser.parse_args()
+
+    all_word_tuples = read_sophia_xmls()
 
     if args.mode == 'check':
         print("Total words: {}".format(len(all_word_tuples)))
     elif args.mode == 'extract_lexicon':
         for x in all_word_tuples:
-            #print(x[0], x[1], x[2])
-            print(x[2])
+            print(x[0], x[1], x[2])
+            exit(1)
+            #print(x[2])
     else:
         raise NotImplementedError
