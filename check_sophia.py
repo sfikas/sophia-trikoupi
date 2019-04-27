@@ -6,8 +6,14 @@ import tqdm
 import cv2
 import numpy as np
 
-def get_list_of_unigrams():
-    raise NotImplementedError
+def get_list_of_unigrams(corpus_file):
+    charset = set()
+    with open(corpus_file, 'r') as f:
+        for word in f.readlines():
+            word = word.strip()
+            for char in word:
+                charset.add(char)
+    print(charset)
 
 def process_bbox(xx):
     xx = xx.split(' ')
@@ -36,13 +42,14 @@ def get_words_from_pagexml(xmlname,
     words = re.findall(rexp, xmldata)
     #
     words_processed = []
-    punctuation_mark_table = dict.fromkeys(map(ord, ',.’:;"-()!·'), None)
+    punctuation_mark_table = dict.fromkeys(map(ord, '\'‘&,.’:;"-()!·'), None)
     for x in words:
         if strip_punctuation is True:
             transcr_new = x[2].translate(punctuation_mark_table)
         else:
             transcr_new = x[2]
         transcr_new = transcr_new.replace('&quot', '')
+        transcr_new = transcr_new.replace('quot', '')
         #trascr_new = re.sub(r'&quot', '', transcr_new)
         points_new = process_bbox(x[1])
         #id_new = x[0]
@@ -69,7 +76,7 @@ if __name__=='__main__':
     logger = logging.getLogger('SophiaTrikoupi::dataset')
     logger.info('------')
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', '-mode', required=True, choices=['check','extract_lexicon'], help='Execution mode.')
+    parser.add_argument('--mode', '-mode', required=True, choices=['check','extract_lexicon','get_unigrams'], help='Execution mode.')
     args = parser.parse_args()
 
     all_word_tuples = read_sophia_xmls()
@@ -80,5 +87,7 @@ if __name__=='__main__':
         for x in all_word_tuples:
             #print(x[0], x[1], x[2])
             print(x[2])
+    elif args.mode == 'get_unigrams':
+        get_list_of_unigrams('sophia_lexicon_punctation_removed.txt')
     else:
         raise NotImplementedError
