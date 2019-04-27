@@ -25,9 +25,6 @@ class SophiaDataset(Dataset):
     Note/warning:
     Instead, the criterion to label a word as a query is unique_word_strings[np.where(counts > 1)[0]].
     '''
-    TRAINING_PARTITION     = 1
-    VALIDATION_PARTITION   = 2
-    TEST_PARTITION         = 3
     def __init__(self, phoc_layout: PhocLayout,
                 root_dir = 'data/',
                 embedding='phoc',
@@ -45,7 +42,12 @@ class SophiaDataset(Dataset):
         self.label_encoder                  compute a mapping from class string to class id. Initialize after filling-in self.words.        
         self.query_list                     this is defined in MainLoader.
         '''
-
+        def xml2jpg(xml):
+            base, ext = os.path.splitext(xml)
+            return base + '.JPG'
+        self.TRAINING_PARTITION     = 1
+        self.VALIDATION_PARTITION   = 2
+        self.TEST_PARTITION         = 3
         if embedding not in ['phoc', 'wordlength']:
             raise ValueError('embedding must be either phoc or wordlength')
 
@@ -60,25 +62,26 @@ class SophiaDataset(Dataset):
         for x in range(1, 48):
             if x == 12:
                 continue #Page 12 was omitted / doesn't exist
-            all_xmls.append('data/_00{0:02d}.xml'.format(x))
+            all_xmls.append(os.path.join(root_dir, '_00{0:02d}.xml'.format(x)) )
         # load the dataset
         self.words = []
         self.split_ids = []
         word_id = 1
         for page_id in all_xmls:
-            doc_img = img_io.imread(page_id)
+            doc_img = img_io.imread(xml2jpg(page_id))
+            doc_img = np.mean(doc_img, axis=2)               # inputs of sophia are colour
             doc_img = 1 - doc_img.astype(np.float32) / 255.0 # scale black pixels to 1 and white pixels to 0
             for word in get_words_from_pagexml(page_id):
-                ul_x, ul_y, lr_x, lr_y = word[1]
-                word_img = doc_img[ul_y:lr_y, ul_x:lr_x].copy()
+                x, y, w, h = word[1]
+                word_img = doc_img[y:y+h, x:x+w].copy()
                 word_img = check_size(img=word_img, min_image_width_height=min_image_width_height)
                 # Decide on split_id (this comes from footnote on page 3 of Sfikas et al.2015)
                 if word_id >= 1 and word_id <= 2000:
-                    current_split_id = TRAINING_PARTITION
+                    current_split_id = self.TRAINING_PARTITION
                 elif word_id >= 2001 and word_id <= 4000:
-                    current_split_id = TEST_PARTITION
+                    current_split_id = self.TEST_PARTITION
                 elif word_id >= 4001 and word_id <= 4941:
-                    current_split_id = VALIDATION_PARTITION
+                    current_split_id = self.VALIDATION_PARTITION
                 else:
                     raise ValueError('Word id read out of bounds (={}); it should have been in [1,4941].'.format(current_split_id))
                 transcr = word[2]
@@ -118,9 +121,9 @@ class SophiaDataset(Dataset):
 
         if partition is not None:
             if partition == 'train':
-                partition_id = TRAINING_PARTITION
+                partition_id = self.TRAINING_PARTITION
             elif partition == 'test':
-                partition_id = TEST_PARTITION
+                partition_id = self.TEST_PARTITION
             else:
                 raise NotImplementedError('This partition type is not used in the current implementation.')
             for word, string, split_id in zip(self.words, self.word_embeddings, self.split_ids):
