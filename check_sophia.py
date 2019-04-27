@@ -1,6 +1,7 @@
+import os
 import re
 import argparse
-import os
+import logging
 
 def get_words_from_pagexml(xmlname):
     """
@@ -14,12 +15,24 @@ def get_words_from_pagexml(xmlname):
     return(words)
 
 if __name__=='__main__':
+    logger = logging.getLogger('SophiaTrikoupi::dataset')
+    logger.info('------')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--mode', '-mode', required=True, choices=['check','read_words'], help='Execution mode.')
+    args = parser.parse_args()
+
     all_word_tuples = []
     all_xmls = []
     for x in range(1, 48):
         if x == 12:
             continue #Page 12 was omitted / doesn't exist
-        all_xmls.append('_00{0:02d}.xml'.format(x))
+        all_xmls.append('data/_00{0:02d}.xml'.format(x))
     for x in all_xmls:
         all_word_tuples += get_words_from_pagexml(x)
-    print("Total words: {}".format(len(all_word_tuples)))
+
+    if args.mode == 'check':
+        print("Total words: {}".format(len(all_word_tuples)))
+    elif args.mode == 'read_words':
+        raise NotImplementedError
+    else:
+        raise NotImplementedError
