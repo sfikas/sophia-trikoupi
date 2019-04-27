@@ -78,8 +78,7 @@ if __name__=='__main__':
         print("Total words: {}".format(len(all_word_tuples)))
     elif args.mode == 'extract_lexicon':
         for x in all_word_tuples:
-            print(x[0], x[1], x[2])
-            exit(1)
-            #print(x[2])
+            #print(x[0], x[1], x[2])
+            print(x[2])
     else:
         raise NotImplementedError
