@@ -102,7 +102,7 @@ if __name__=='__main__':
             #print(x[0], x[1], x[2])
             print(x[2])
     elif args.mode == 'get_unigrams':
-        tt = get_list_of_unigrams('wordlist/nopunctuation/sophia_lexicon.txt')
+        tt = get_list_of_unigrams('wordlist/nopunctuation_nocapitals_nolatins/sophia_lexicon.txt')
         print('A total of {} unique unigrams.'.format(len(tt)))
     else:
         raise NotImplementedError
