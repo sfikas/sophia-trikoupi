@@ -29,13 +29,11 @@ def process_bbox(xx):
     return(res)
 
 def get_words_from_pagexml(xmlname,
-        strip_punctuation=True,
-        force_lowercase=False):
+        keep_punctuation=False,
+        keep_capitals=False):
     """
     Returns a list of tuples. Each tuple corresponds to one word.
     """
-    if force_lowercase is True:
-        raise NotImplementedError
     with open(xmlname, 'r') as f:
         xmldata = f.read().replace('\n', '')
     rexp = '<Word id="(.*?)">\s*<Coords points="(.*?)"/>\s*<TextEquiv>\s*<Unicode>(.+?)</Unicode>\s*</TextEquiv>\s*</Word>'
@@ -44,12 +42,14 @@ def get_words_from_pagexml(xmlname,
     words_processed = []
     punctuation_mark_table = dict.fromkeys(map(ord, '\'‘&,.’:;"-()!·'), None)
     for x in words:
-        if strip_punctuation is True:
+        if keep_punctuation is False:
             transcr_new = x[2].translate(punctuation_mark_table)
         else:
             transcr_new = x[2]
         transcr_new = transcr_new.replace('&quot', '')
         transcr_new = transcr_new.replace('quot', '')
+        if keep_capitals is False:
+            pass
         #trascr_new = re.sub(r'&quot', '', transcr_new)
         points_new = process_bbox(x[1])
         #id_new = x[0]
@@ -77,8 +77,13 @@ if __name__=='__main__':
     logger.info('------')
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', '-mode', required=True, choices=['check','extract_lexicon','get_unigrams'], help='Execution mode.')
+    parser.add_argument('--keep_punctuation',  dest='keep_punctuation', action='store_true', help='Do not remove punctuation from annotation.')
+    parser.add_argument('--keep_capitals',  dest='keep_capitals', action='store_true', help='Do not force lowercase letters on annotation.')
+    parser.set_defaults(
+            keep_punctuation=False,
+            keep_capitals=False,
+    )
     args = parser.parse_args()
-
     all_word_tuples = read_sophia_xmls()
 
     if args.mode == 'check':
@@ -88,6 +93,8 @@ if __name__=='__main__':
             #print(x[0], x[1], x[2])
             print(x[2])
     elif args.mode == 'get_unigrams':
-        get_list_of_unigrams('sophia_lexicon_punctation_removed.txt')
+        get_list_of_unigrams('sophia_lexicon_punctation_removed.txt',
+            keep_punctuation=args.keep_punctuation,
+            keep_capitals=args.keep_capitals)
     else:
         raise NotImplementedError

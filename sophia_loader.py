@@ -116,14 +116,16 @@ class SophiaDataset(Dataset):
         self.transforms = transforms
         self.word_list = []
         self.word_string_embeddings = []
-        if partition not in [None, 'train', 'test']:
-            raise ValueError('partition must be one of None, train or test')
+        if partition not in [None, 'train', 'test', 'validation']:
+            raise ValueError('partition must be one of None, train, test, validation')
 
         if partition is not None:
             if partition == 'train':
                 partition_id = self.TRAINING_PARTITION
             elif partition == 'test':
-                partition_id = self.TEST_PARTITION
+                partition_id = self.TEST_PARTITION #self.TEST_PARTITION
+            elif partition == 'validation':
+                partition_id = self.VALIDATION_PARTITION
             else:
                 raise NotImplementedError('This partition type is not used in the current implementation.')
             for word, string, split_id in zip(self.words, self.word_embeddings, self.split_ids):
