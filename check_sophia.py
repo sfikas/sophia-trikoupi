@@ -14,6 +14,7 @@ def get_list_of_unigrams(corpus_file):
             for char in word:
                 charset.add(char)
     print(charset)
+    return(charset)
 
 def process_bbox(xx):
     xx = xx.split(' ')
@@ -30,7 +31,8 @@ def process_bbox(xx):
 
 def get_words_from_pagexml(xmlname,
         keep_punctuation=False,
-        keep_capitals=False):
+        keep_capitals=False,
+        keep_latins=False):
     """
     Returns a list of tuples. Each tuple corresponds to one word.
     """
@@ -41,6 +43,8 @@ def get_words_from_pagexml(xmlname,
     #
     words_processed = []
     punctuation_mark_table = dict.fromkeys(map(ord, '\'‘&,.’:;"-()!·'), None)
+    latin_min_mark_table = dict.fromkeys(map(ord, 'abcdefghijklmnopqrstuvwxyz'), None)
+    latin_maj_mark_table = dict.fromkeys(map(ord, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'), None)
     for x in words:
         if keep_punctuation is False:
             transcr_new = x[2].translate(punctuation_mark_table)
@@ -49,7 +53,10 @@ def get_words_from_pagexml(xmlname,
         transcr_new = transcr_new.replace('&quot', '')
         transcr_new = transcr_new.replace('quot', '')
         if keep_capitals is False:
-            pass
+            transcr_new = transcr_new.lower()
+        if keep_latins is False:
+            transcr_new = transcr_new.translate(latin_min_mark_table)
+            transcr_new = transcr_new.translate(latin_maj_mark_table)
         #trascr_new = re.sub(r'&quot', '', transcr_new)
         points_new = process_bbox(x[1])
         #id_new = x[0]
@@ -61,7 +68,7 @@ def get_words_from_pagexml(xmlname,
     print('Found {} words in file {}.'.format(len(words_processed), xmlname))
     return(words_processed)
 
-def read_sophia_xmls():
+def read_sophia_xmls(keep_punctuation=False, keep_capitals=False, keep_latins=False):
     all_word_tuples = []
     all_xmls = []
     for x in range(1, 48):
@@ -69,7 +76,7 @@ def read_sophia_xmls():
             continue #Page 12 was omitted / doesn't exist
         all_xmls.append('data/_00{0:02d}.xml'.format(x))
     for x in all_xmls:
-        all_word_tuples += get_words_from_pagexml(x)
+        all_word_tuples += get_words_from_pagexml(x, keep_punctuation=keep_punctuation, keep_capitals=keep_capitals, keep_latins=keep_latins)
     return all_word_tuples
 
 if __name__=='__main__':
@@ -79,12 +86,14 @@ if __name__=='__main__':
     parser.add_argument('--mode', '-mode', required=True, choices=['check','extract_lexicon','get_unigrams'], help='Execution mode.')
     parser.add_argument('--keep_punctuation',  dest='keep_punctuation', action='store_true', help='Do not remove punctuation from annotation.')
     parser.add_argument('--keep_capitals',  dest='keep_capitals', action='store_true', help='Do not force lowercase letters on annotation.')
+    parser.add_argument('--keep_latins',  dest='keep_latins', action='store_true', help='Do not remove latin letters from annotation.')
     parser.set_defaults(
             keep_punctuation=False,
             keep_capitals=False,
+            keep_latins=False,
     )
     args = parser.parse_args()
-    all_word_tuples = read_sophia_xmls()
+    all_word_tuples = read_sophia_xmls(keep_punctuation=args.keep_punctuation, keep_capitals=args.keep_capitals, keep_latins=args.keep_latins)
 
     if args.mode == 'check':
         print("Total words: {}".format(len(all_word_tuples)))
@@ -93,8 +102,7 @@ if __name__=='__main__':
             #print(x[0], x[1], x[2])
             print(x[2])
     elif args.mode == 'get_unigrams':
-        get_list_of_unigrams('sophia_lexicon_punctation_removed.txt',
-            keep_punctuation=args.keep_punctuation,
-            keep_capitals=args.keep_capitals)
+        tt = get_list_of_unigrams('wordlist/nopunctuation/sophia_lexicon.txt')
+        print('A total of {} unique unigrams.'.format(len(tt)))
     else:
         raise NotImplementedError
